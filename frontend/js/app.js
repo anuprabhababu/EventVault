@@ -1,6 +1,5 @@
 /* ================= BACKEND CONFIG ================= */
 
-// 🔥 REPLACE WITH YOUR REAL RENDER URL
 const BASE_URL = "https://expp-zefs.onrender.com/api";
 
 
@@ -9,7 +8,6 @@ const BASE_URL = "https://expp-zefs.onrender.com/api";
 const SUPABASE_URL = "https://zxaibceibivexxkiffnt.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp4YWliY2VpYml2ZXh4a2lmZm50Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIxODc5MTIsImV4cCI6MjA4Nzc2MzkxMn0.7DcyuYTmx1TCFffd63V0_DloxB1z5j_2NbnH6GBJhig";
 
-// Supabase v2 CDN usage
 const supabaseClient = supabase.createClient(
   SUPABASE_URL,
   SUPABASE_ANON_KEY
@@ -41,25 +39,6 @@ async function loadEvents() {
     applyFilters();
     updateStats();
     renderPriority();
-
-    // Reminder Logic
-    allEvents.forEach(e => {
-
-      if (!e.reminder_enabled) return;
-      if (e.status === "Attended") return;
-
-      const days = daysLeft(e.registration_deadline);
-
-      if (days <= 1 && days >= 0) {
-
-        const reminderKey = `reminded_${e.id}`;
-
-        if (!sessionStorage.getItem(reminderKey)) {
-          alert(`🔔 Reminder: "${e.name}" deadline is near!`);
-          sessionStorage.setItem(reminderKey, "true");
-        }
-      }
-    });
 
   } catch (err) {
     console.error("Load error:", err);
@@ -99,8 +78,8 @@ function applyFilters() {
     filtered = filtered
       .filter(e => e.status !== "Attended")
       .sort((a, b) =>
-        daysLeft(a.registration_deadline) -
-        daysLeft(b.registration_deadline)
+        new Date(a.registration_deadline) -
+        new Date(b.registration_deadline)
       );
   }
 
@@ -120,19 +99,13 @@ function renderEvents(events) {
   }
 
   events.forEach(e => {
-    const days = daysLeft(e.registration_deadline);
-    const urgency = urgencyClass(days);
+    const days =
+      Math.ceil((new Date(e.registration_deadline) - new Date()) / (1000 * 60 * 60 * 24));
 
     grid.innerHTML += `
-      <div class="event-card ${urgency}" 
-           onclick="openDetail('${e.id}')">
-
+      <div class="event-card" onclick="openDetail('${e.id}')">
         <div class="event-name">${e.name}</div>
-
-        <div class="countdown">
-          ${days} days left
-        </div>
-
+        <div class="countdown">${days >= 0 ? days : 0} days left</div>
       </div>
     `;
   });
@@ -145,7 +118,7 @@ function updateStats() {
   document.getElementById("totalCount").textContent = allEvents.length;
 
   const urgent = allEvents.filter(e =>
-    daysLeft(e.registration_deadline) <= 7 &&
+    new Date(e.registration_deadline) - new Date() <= 7 * 86400000 &&
     e.status !== "Attended"
   );
   document.getElementById("urgentCount").textContent = urgent.length;
@@ -171,21 +144,42 @@ function renderPriority() {
   const activeEvents = allEvents
     .filter(e => e.status !== "Attended")
     .sort((a, b) =>
-      daysLeft(a.registration_deadline) -
-      daysLeft(b.registration_deadline)
+      new Date(a.registration_deadline) -
+      new Date(b.registration_deadline)
     );
 
   activeEvents.slice(0, 5).forEach((e, index) => {
-    const days = daysLeft(e.registration_deadline);
-
     container.innerHTML += `
       <div class="priority-item">
         <div>#${index + 1}</div>
         <div>${e.name}</div>
-        <div>${days} days</div>
       </div>
     `;
   });
+}
+
+
+/* ================= DETAIL ================= */
+
+function openDetail(id) {
+  const eventObj = allEvents.find(e => e.id === id);
+  if (!eventObj) return;
+
+  const modal = document.getElementById("detailModal");
+  const content = document.getElementById("detailContent");
+
+  content.innerHTML = `
+    <h3>${eventObj.name}</h3>
+    <p><strong>Category:</strong> ${eventObj.category}</p>
+    <p><strong>Status:</strong> ${eventObj.status}</p>
+    <p><strong>Deadline:</strong> ${eventObj.registration_deadline}</p>
+
+    <div style="margin-top:20px;">
+      <button onclick="deleteEventConfirmed('${eventObj.id}')">Delete</button>
+    </div>
+  `;
+
+  modal.classList.add("open");
 }
 
 
@@ -209,19 +203,14 @@ function setupForm() {
     };
 
     try {
-
       if (editingEventId) {
-
         await fetch(`${BASE_URL}/events/${editingEventId}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(eventData)
         });
-
         editingEventId = null;
-
       } else {
-
         await fetch(`${BASE_URL}/events`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -254,7 +243,7 @@ async function deleteEventConfirmed(id) {
 }
 
 
-/* ================= FILE UPLOAD ================= */
+/* ================= CERTIFICATE ================= */
 
 async function uploadFile(file, folder) {
   const fileName = `${folder}-${Date.now()}-${file.name}`;
@@ -264,7 +253,7 @@ async function uploadFile(file, folder) {
     .upload(fileName, file);
 
   if (error) {
-    console.error("Upload error:", error);
+    console.error(error);
     return null;
   }
 
@@ -275,15 +264,11 @@ async function uploadFile(file, folder) {
   return { url: data.publicUrl };
 }
 
-
-/* ================= CERTIFICATE ================= */
-
 async function uploadCertificate(event, eventId) {
   const file = event.target.files[0];
   if (!file) return;
 
   try {
-
     const uploadRes = await uploadFile(file, "certificate");
 
     if (!uploadRes) {
@@ -303,71 +288,13 @@ async function uploadCertificate(event, eventId) {
     openDetail(eventId);
 
   } catch (err) {
-    console.error("Certificate upload error:", err);
-    alert("Something went wrong.");
+    console.error(err);
   }
-  function openDetail(id) {
-  const eventObj = allEvents.find(e => e.id === id);
-  if (!eventObj) return;
-
-  const modal = document.getElementById("detailModal");
-  const content = document.getElementById("detailContent");
-
-  content.innerHTML = `
-    <h3>${eventObj.name}</h3>
-
-    <p><strong>Category:</strong> ${eventObj.category}</p>
-    <p><strong>Source:</strong> ${eventObj.source || "-"}</p>
-    <p><strong>Event Date:</strong> ${eventObj.event_date || "-"}</p>
-    <p><strong>Registration Deadline:</strong> ${eventObj.registration_deadline}</p>
-    <p><strong>Status:</strong> ${eventObj.status}</p>
-    <p><strong>Notes:</strong> ${eventObj.notes || "-"}</p>
-
-    <div style="margin-top:20px; display:flex; gap:10px;">
-      <button onclick="window.open('${eventObj.link}', '_blank')">
-        Open Registration
-      </button>
-
-      <button onclick="editEvent('${eventObj.id}')">
-        Edit
-      </button>
-
-      <button onclick="deleteEventConfirmed('${eventObj.id}')">
-        Delete
-      </button>
-    </div>
-
-    <hr style="margin:20px 0;">
-
-    <h4>🎓 Certificate</h4>
-
-    ${
-      eventObj.certificate_url
-        ? `
-          <div style="display:flex; gap:10px;">
-            <button onclick="window.open('${eventObj.certificate_url}', '_blank')">
-              Open Certificate
-            </button>
-
-            <button onclick="removeCertificate('${eventObj.id}')">
-              Remove Certificate
-            </button>
-          </div>
-        `
-        : `
-          <input type="file"
-                 accept=".pdf,.jpg,.jpeg,.png"
-                 onchange="uploadCertificate(event, '${eventObj.id}')">
-        `
-    }
-  `;
-
-  modal.classList.add("open");
 }
-  // Make functions global for HTML onclick
+
+
+/* ================= GLOBAL EXPORTS FOR HTML ================= */
+
 window.openDetail = openDetail;
 window.deleteEventConfirmed = deleteEventConfirmed;
 window.uploadCertificate = uploadCertificate;
-window.removeCertificate = removeCertificate;
-window.editEvent = editEvent;
-}

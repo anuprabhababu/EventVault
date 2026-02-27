@@ -6,26 +6,34 @@ const eventsRoutes = require('./routes/events');
 
 const app = express();
 
-// CORS (allow frontend + local dev)
+/* ================= CORS CONFIG ================= */
+
 app.use(cors({
   origin: [
     "http://localhost:5173",
-    "https://ex1-liard-six.vercel.app"
-  ]
+    "https://ex1-liard-six.vercel.app",
+    "https://ex1-hs3zfawan-anuprabhas-projects.vercel.app"
+  ],
+  methods: ["GET", "POST", "PUT", "DELETE"],
+  allowedHeaders: ["Content-Type"]
 }));
 
-// Parse JSON
+/* ================= MIDDLEWARE ================= */
+
 app.use(express.json());
 
-// Routes
+/* ================= ROUTES ================= */
+
 app.use('/api/events', eventsRoutes);
 
-// Test Route
+/* ================= TEST ROUTE ================= */
+
 app.get("/", (req, res) => {
   res.send("Backend is running successfully 🚀");
 });
 
-// PORT fix (important)
+/* ================= SERVER ================= */
+
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
