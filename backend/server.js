@@ -29,7 +29,7 @@ app.use('/api/events', eventsRoutes);
 /* ================= TEST ROUTE ================= */
 
 app.get("/", (req, res) => {
-  res.send("Backend is running successfully 🚀");
+  res.send("NEW VERSION - CORS TEST");
 });
 
 /* ================= SERVER ================= */
