@@ -306,6 +306,64 @@ async function uploadCertificate(event, eventId) {
     console.error("Certificate upload error:", err);
     alert("Something went wrong.");
   }
+  function openDetail(id) {
+  const eventObj = allEvents.find(e => e.id === id);
+  if (!eventObj) return;
+
+  const modal = document.getElementById("detailModal");
+  const content = document.getElementById("detailContent");
+
+  content.innerHTML = `
+    <h3>${eventObj.name}</h3>
+
+    <p><strong>Category:</strong> ${eventObj.category}</p>
+    <p><strong>Source:</strong> ${eventObj.source || "-"}</p>
+    <p><strong>Event Date:</strong> ${eventObj.event_date || "-"}</p>
+    <p><strong>Registration Deadline:</strong> ${eventObj.registration_deadline}</p>
+    <p><strong>Status:</strong> ${eventObj.status}</p>
+    <p><strong>Notes:</strong> ${eventObj.notes || "-"}</p>
+
+    <div style="margin-top:20px; display:flex; gap:10px;">
+      <button onclick="window.open('${eventObj.link}', '_blank')">
+        Open Registration
+      </button>
+
+      <button onclick="editEvent('${eventObj.id}')">
+        Edit
+      </button>
+
+      <button onclick="deleteEventConfirmed('${eventObj.id}')">
+        Delete
+      </button>
+    </div>
+
+    <hr style="margin:20px 0;">
+
+    <h4>🎓 Certificate</h4>
+
+    ${
+      eventObj.certificate_url
+        ? `
+          <div style="display:flex; gap:10px;">
+            <button onclick="window.open('${eventObj.certificate_url}', '_blank')">
+              Open Certificate
+            </button>
+
+            <button onclick="removeCertificate('${eventObj.id}')">
+              Remove Certificate
+            </button>
+          </div>
+        `
+        : `
+          <input type="file"
+                 accept=".pdf,.jpg,.jpeg,.png"
+                 onchange="uploadCertificate(event, '${eventObj.id}')">
+        `
+    }
+  `;
+
+  modal.classList.add("open");
+}
   // Make functions global for HTML onclick
 window.openDetail = openDetail;
 window.deleteEventConfirmed = deleteEventConfirmed;
