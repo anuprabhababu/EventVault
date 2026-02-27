@@ -2,7 +2,6 @@
 
 const BASE_URL = "https://expp-zefs.onrender.com/api";
 
-
 /* ================= SUPABASE CONFIG ================= */
 
 const SUPABASE_URL = "https://zxaibceibivexxkiffnt.supabase.co";
@@ -12,7 +11,6 @@ const supabaseClient = supabase.createClient(
   SUPABASE_URL,
   SUPABASE_ANON_KEY
 );
-
 
 /* ================= GLOBAL STATE ================= */
 
@@ -28,7 +26,6 @@ async function init() {
   setupForm();
 }
 
-
 /* ================= LOAD EVENTS ================= */
 
 async function loadEvents() {
@@ -39,12 +36,36 @@ async function loadEvents() {
     applyFilters();
     updateStats();
     renderPriority();
+    runReminders();
 
   } catch (err) {
     console.error("Load error:", err);
   }
 }
 
+/* ================= REMINDER ================= */
+
+function runReminders() {
+  allEvents.forEach(e => {
+
+    if (!e.reminder_enabled) return;
+    if (e.status === "Attended") return;
+
+    const daysLeft = Math.ceil(
+      (new Date(e.registration_deadline) - new Date()) /
+      (1000 * 60 * 60 * 24)
+    );
+
+    if (daysLeft <= 1 && daysLeft >= 0) {
+      const reminderKey = `reminded_${e.id}`;
+
+      if (!sessionStorage.getItem(reminderKey)) {
+        alert(`🔔 Reminder: "${e.name}" deadline is near!`);
+        sessionStorage.setItem(reminderKey, "true");
+      }
+    }
+  });
+}
 
 /* ================= FILTERING ================= */
 
@@ -86,7 +107,6 @@ function applyFilters() {
   renderEvents(filtered);
 }
 
-
 /* ================= RENDER EVENTS ================= */
 
 function renderEvents(events) {
@@ -99,8 +119,10 @@ function renderEvents(events) {
   }
 
   events.forEach(e => {
-    const days =
-      Math.ceil((new Date(e.registration_deadline) - new Date()) / (1000 * 60 * 60 * 24));
+    const days = Math.ceil(
+      (new Date(e.registration_deadline) - new Date()) /
+      (1000 * 60 * 60 * 24)
+    );
 
     grid.innerHTML += `
       <div class="event-card" onclick="openDetail('${e.id}')">
@@ -110,7 +132,6 @@ function renderEvents(events) {
     `;
   });
 }
-
 
 /* ================= UPDATE STATS ================= */
 
@@ -133,7 +154,6 @@ function updateStats() {
   );
   document.getElementById("certificatePending").textContent = pendingCert.length;
 }
-
 
 /* ================= PRIORITY ================= */
 
@@ -158,7 +178,6 @@ function renderPriority() {
   });
 }
 
-
 /* ================= DETAIL ================= */
 
 function openDetail(id) {
@@ -171,17 +190,67 @@ function openDetail(id) {
   content.innerHTML = `
     <h3>${eventObj.name}</h3>
     <p><strong>Category:</strong> ${eventObj.category}</p>
+    <p><strong>Source:</strong> ${eventObj.source || "-"}</p>
+    <p><strong>Event Date:</strong> ${eventObj.event_date || "-"}</p>
+    <p><strong>Registration Deadline:</strong> ${eventObj.registration_deadline}</p>
     <p><strong>Status:</strong> ${eventObj.status}</p>
-    <p><strong>Deadline:</strong> ${eventObj.registration_deadline}</p>
+    <p><strong>Notes:</strong> ${eventObj.notes || "-"}</p>
 
-    <div style="margin-top:20px;">
+    <div style="margin-top:20px; display:flex; gap:10px;">
+      <button onclick="window.open('${eventObj.link}', '_blank')">Open Registration</button>
+      <button onclick="editEvent('${eventObj.id}')">Edit</button>
       <button onclick="deleteEventConfirmed('${eventObj.id}')">Delete</button>
     </div>
+
+    <hr>
+
+    <h4>🎓 Certificate</h4>
+
+    ${
+      eventObj.certificate_url
+        ? `
+          <button onclick="window.open('${eventObj.certificate_url}', '_blank')">
+            Open Certificate
+          </button>
+          <button onclick="removeCertificate('${eventObj.id}')">
+            Remove Certificate
+          </button>
+        `
+        : `
+          <input type="file"
+                 accept=".pdf,.jpg,.jpeg,.png"
+                 onchange="uploadCertificate(event, '${eventObj.id}')">
+        `
+    }
   `;
 
   modal.classList.add("open");
 }
 
+function closeDetail() {
+  document.getElementById("detailModal").classList.remove("open");
+}
+
+/* ================= EDIT ================= */
+
+function editEvent(id) {
+  const eventObj = allEvents.find(e => e.id === id);
+  if (!eventObj) return;
+
+  document.getElementById("name").value = eventObj.name || "";
+  document.getElementById("category").value = eventObj.category || "";
+  document.getElementById("source").value = eventObj.source || "";
+  document.getElementById("event_date").value = eventObj.event_date || "";
+  document.getElementById("registration_deadline").value = eventObj.registration_deadline || "";
+  document.getElementById("link").value = eventObj.link || "";
+  document.getElementById("notes").value = eventObj.notes || "";
+  document.getElementById("status").value = eventObj.status || "";
+
+  editingEventId = id;
+
+  closeDetail();
+  openModal();
+}
 
 /* ================= FORM ================= */
 
@@ -209,7 +278,6 @@ function setupForm() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(eventData)
         });
-        editingEventId = null;
       } else {
         await fetch(`${BASE_URL}/events`, {
           method: "POST",
@@ -218,6 +286,7 @@ function setupForm() {
         });
       }
 
+      editingEventId = null;
       closeModal();
       form.reset();
       await loadEvents();
@@ -227,7 +296,6 @@ function setupForm() {
     }
   });
 }
-
 
 /* ================= DELETE ================= */
 
@@ -241,7 +309,6 @@ async function deleteEventConfirmed(id) {
   closeDetail();
   await loadEvents();
 }
-
 
 /* ================= CERTIFICATE ================= */
 
@@ -268,36 +335,45 @@ async function uploadCertificate(event, eventId) {
   const file = event.target.files[0];
   if (!file) return;
 
-  try {
-    const uploadRes = await uploadFile(file, "certificate");
+  const uploadRes = await uploadFile(file, "certificate");
 
-    if (!uploadRes) {
-      alert("Upload failed.");
-      return;
-    }
-
-    await fetch(`${BASE_URL}/events/${eventId}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        certificate_url: uploadRes.url
-      })
-    });
-
-    await loadEvents();
-    openDetail(eventId);
-
-  } catch (err) {
-    console.error(err);
+  if (!uploadRes) {
+    alert("Upload failed.");
+    return;
   }
-}
-function closeDetail() {
-  document.getElementById("detailModal").classList.remove("open");
+
+  await fetch(`${BASE_URL}/events/${eventId}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      certificate_url: uploadRes.url
+    })
+  });
+
+  await loadEvents();
+  openDetail(eventId);
 }
 
-/* ================= GLOBAL EXPORTS FOR HTML ================= */
+async function removeCertificate(eventId) {
+  if (!confirm("Remove certificate?")) return;
+
+  await fetch(`${BASE_URL}/events/${eventId}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      certificate_url: null
+    })
+  });
+
+  await loadEvents();
+  openDetail(eventId);
+}
+
+/* ================= GLOBAL EXPORTS ================= */
 
 window.openDetail = openDetail;
+window.closeDetail = closeDetail;
 window.deleteEventConfirmed = deleteEventConfirmed;
 window.uploadCertificate = uploadCertificate;
-window.closeDetail = closeDetail;
+window.editEvent = editEvent;
+window.removeCertificate = removeCertificate;
