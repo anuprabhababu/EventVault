@@ -1,18 +1,25 @@
-const BASE_URL = "http://localhost:5000/api";
+/* ================= BACKEND CONFIG ================= */
+
+// 🔥 REPLACE WITH YOUR REAL RENDER URL
+const BASE_URL = "https://expp-zefs.onrender.com/api";
+
 
 /* ================= SUPABASE CONFIG ================= */
 
 const SUPABASE_URL = "https://zxaibceibivexxkiffnt.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp4YWliY2VpYml2ZXh4a2lmZm50Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIxODc5MTIsImV4cCI6MjA4Nzc2MzkxMn0.7DcyuYTmx1TCFffd63V0_DloxB1z5j_2NbnH6GBJhig";
 
-const supabase = window.supabase.createClient(
+// Supabase v2 CDN usage
+const supabaseClient = supabase.createClient(
   SUPABASE_URL,
   SUPABASE_ANON_KEY
 );
 
+
+/* ================= GLOBAL STATE ================= */
+
 let allEvents = [];
 let editingEventId = null;
-
 let currentCategory = "all";
 let currentStatus = null;
 
@@ -22,6 +29,7 @@ async function init() {
   await loadEvents();
   setupForm();
 }
+
 
 /* ================= LOAD EVENTS ================= */
 
@@ -34,7 +42,7 @@ async function loadEvents() {
     updateStats();
     renderPriority();
 
-    // 🔔 Reminder Logic
+    // Reminder Logic
     allEvents.forEach(e => {
 
       if (!e.reminder_enabled) return;
@@ -57,6 +65,7 @@ async function loadEvents() {
     console.error("Load error:", err);
   }
 }
+
 
 /* ================= FILTERING ================= */
 
@@ -98,6 +107,7 @@ function applyFilters() {
   renderEvents(filtered);
 }
 
+
 /* ================= RENDER EVENTS ================= */
 
 function renderEvents(events) {
@@ -128,6 +138,7 @@ function renderEvents(events) {
   });
 }
 
+
 /* ================= UPDATE STATS ================= */
 
 function updateStats() {
@@ -149,6 +160,7 @@ function updateStats() {
   );
   document.getElementById("certificatePending").textContent = pendingCert.length;
 }
+
 
 /* ================= PRIORITY ================= */
 
@@ -176,6 +188,7 @@ function renderPriority() {
   });
 }
 
+
 /* ================= FORM ================= */
 
 function setupForm() {
@@ -192,14 +205,13 @@ function setupForm() {
       registration_deadline: document.getElementById("registration_deadline").value,
       link: document.getElementById("link").value,
       notes: document.getElementById("notes").value,
-      status: document.getElementById("status").value,
-      reminder_enabled: document.getElementById("reminder")?.checked || false
+      status: document.getElementById("status").value
     };
 
     try {
 
       if (editingEventId) {
-        // 🔥 UPDATE MODE
+
         await fetch(`${BASE_URL}/events/${editingEventId}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
@@ -209,7 +221,7 @@ function setupForm() {
         editingEventId = null;
 
       } else {
-        // 🔥 CREATE MODE
+
         await fetch(`${BASE_URL}/events`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -227,96 +239,6 @@ function setupForm() {
   });
 }
 
-/* ================= DETAIL ================= */
-
-function openDetail(id) {
-  const eventObj = allEvents.find(e => e.id === id);
-  if (!eventObj) return;
-
-  const modal = document.getElementById("detailModal");
-  const content = document.getElementById("detailContent");
-
-  content.innerHTML = `
-    <h3>${eventObj.name}</h3>
-
-    <p><strong>Category:</strong> ${eventObj.category}</p>
-    <p><strong>Source:</strong> ${eventObj.source || "-"}</p>
-    <p><strong>Event Date:</strong> ${eventObj.event_date || "-"}</p>
-    <p><strong>Registration Deadline:</strong> ${eventObj.registration_deadline}</p>
-    <p><strong>Status:</strong> ${eventObj.status}</p>
-    <p><strong>Notes:</strong> ${eventObj.notes || "-"}</p>
-
-    <div style="margin-top:20px; display:flex; gap:10px;">
-      <button onclick="window.open('${eventObj.link}', '_blank')">
-        Open Registration
-      </button>
-
-      <button onclick="editEvent('${eventObj.id}')">
-        Edit
-      </button>
-
-      <button onclick="deleteEventConfirmed('${eventObj.id}')">
-        Delete
-      </button>
-    </div>
-
-    <hr style="margin:20px 0;">
-
-    <h4>🎓 Certificate</h4>
-
-${
-  eventObj.certificate_url
-    ? `
-      <div style="display:flex; gap:10px;">
-        <button onclick="window.open('${eventObj.certificate_url}', '_blank')">
-          Open Certificate
-        </button>
-
-        <button onclick="removeCertificate('${eventObj.id}')">
-          Remove Certificate
-        </button>
-      </div>
-    `
-    : `
-      <input type="file"
-             accept=".pdf,.jpg,.jpeg,.png"
-             onchange="uploadCertificate(event, '${eventObj.id}')">
-    `
-}
-  `;
-
-  modal.classList.add("open");
-}
-
-function closeDetail() {
-  document.getElementById("detailModal").classList.remove("open");
-}
-
-/* ================= EDIT ================= */
-
-function editEvent(id) {
-  const eventObj = allEvents.find(e => e.id === id);
-  if (!eventObj) return;
-
-  document.getElementById("name").value = eventObj.name || "";
-  document.getElementById("category").value = eventObj.category || "";
-  document.getElementById("source").value = eventObj.source || "";
-  document.getElementById("event_date").value = eventObj.event_date || "";
-  document.getElementById("registration_deadline").value = eventObj.registration_deadline || "";
-  document.getElementById("link").value = eventObj.link || "";
-  document.getElementById("notes").value = eventObj.notes || "";
-  document.getElementById("status").value = eventObj.status || "";
-
-  const reminderCheckbox = document.getElementById("reminder");
-  if (reminderCheckbox) {
-    reminderCheckbox.checked = eventObj.reminder_enabled || false;
-  }
-
-  editingEventId = id;
-
-  closeDetail();
-  openModal();
-}
 
 /* ================= DELETE ================= */
 
@@ -331,24 +253,29 @@ async function deleteEventConfirmed(id) {
   await loadEvents();
 }
 
+
+/* ================= FILE UPLOAD ================= */
+
 async function uploadFile(file, folder) {
   const fileName = `${folder}-${Date.now()}-${file.name}`;
 
-  const { data, error } = await supabase.storage
+  const { error } = await supabaseClient.storage
     .from("documents")
     .upload(fileName, file);
 
   if (error) {
-    console.error(error);
+    console.error("Upload error:", error);
     return null;
   }
 
-  const { data: publicUrl } = supabase.storage
+  const { data } = supabaseClient.storage
     .from("documents")
     .getPublicUrl(fileName);
 
-  return { url: publicUrl.publicUrl };
+  return { url: data.publicUrl };
 }
+
+
 /* ================= CERTIFICATE ================= */
 
 async function uploadCertificate(event, eventId) {
@@ -356,14 +283,14 @@ async function uploadCertificate(event, eventId) {
   if (!file) return;
 
   try {
+
     const uploadRes = await uploadFile(file, "certificate");
 
-    if (!uploadRes || !uploadRes.url) {
+    if (!uploadRes) {
       alert("Upload failed.");
       return;
     }
 
-    // Update DB
     await fetch(`${BASE_URL}/events/${eventId}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
@@ -378,25 +305,5 @@ async function uploadCertificate(event, eventId) {
   } catch (err) {
     console.error("Certificate upload error:", err);
     alert("Something went wrong.");
-  }
-}
-
-async function removeCertificate(eventId) {
-  if (!confirm("Remove certificate?")) return;
-
-  try {
-    await fetch(`${BASE_URL}/events/${eventId}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        certificate_url: null
-      })
-    });
-
-    await loadEvents();
-    openDetail(eventId);
-
-  } catch (err) {
-    console.error("Remove error:", err);
   }
 }
