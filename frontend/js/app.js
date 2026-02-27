@@ -306,4 +306,10 @@ async function uploadCertificate(event, eventId) {
     console.error("Certificate upload error:", err);
     alert("Something went wrong.");
   }
+  // Make functions global for HTML onclick
+window.openDetail = openDetail;
+window.deleteEventConfirmed = deleteEventConfirmed;
+window.uploadCertificate = uploadCertificate;
+window.removeCertificate = removeCertificate;
+window.editEvent = editEvent;
 }
