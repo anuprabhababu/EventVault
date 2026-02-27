@@ -291,10 +291,13 @@ async function uploadCertificate(event, eventId) {
     console.error(err);
   }
 }
-
+function closeDetail() {
+  document.getElementById("detailModal").classList.remove("open");
+}
 
 /* ================= GLOBAL EXPORTS FOR HTML ================= */
 
 window.openDetail = openDetail;
 window.deleteEventConfirmed = deleteEventConfirmed;
 window.uploadCertificate = uploadCertificate;
+window.closeDetail = closeDetail;
