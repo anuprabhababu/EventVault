@@ -61,10 +61,9 @@ app.get("/", (req, res) => {
   res.send("NEW VERSION - CORS FIX FINAL");
 });
 
-/* ================= SERVER ================= */
-
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
-});});
+});
+});
