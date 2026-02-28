@@ -70,11 +70,10 @@ Shows details entered and also provides option to edit or delete the event and u
 Diagrams
 System Architecture:
 
-Architecture Diagram Explain your system architecture - components, data flow, tech stack interaction
-
 Application Workflow:
 
-Workflow Add caption explaining your workflow
+
+
 
 Additional Documentation
 For Web Projects with Backend:
