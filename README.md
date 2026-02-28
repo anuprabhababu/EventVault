@@ -59,9 +59,9 @@ Dashboard
 Add event
 Shows dialog box to add event
 
-![Uploading image.png…]()
-Categorised event
-Shows all hackathons that are registered
+<img width="1887" height="858" alt="image" src="https://github.com/user-attachments/assets/52498eab-47d7-488e-ba82-d1ff9fc0d7b7" />
+Event details
+Shows details entered and also provides option to edit or delete the event and upload certificate.
 
 Diagrams
 System Architecture:
