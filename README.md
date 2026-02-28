@@ -36,12 +36,41 @@ Feature 1: allows users to store complete details of an event
 Feature 2: incldes the action of common reaminder apps
 Feature 3: allows users to store documents
 Feature 4: Classifies Events based on category(Hackathon,Webinar etc) and also status(like registered, not registered and attended)
+
 Implementation
 For Software:
 Installation
 nil
 Run
 npm start
+Project Documentation
+
+For Software:
+Screenshots (Add at least 3)
+<img width="1917" height="947" alt="image" src="https://github.com/user-attachments/assets/4ab5061a-260d-4903-9bfd-a6b8bce611bb" />
+Remainder
+Remainder is shown for events that re very close
+
+<img width="1901" height="842" alt="image" src="https://github.com/user-attachments/assets/f34f7873-c237-470a-94ea-52adad823230" />
+Dashboard
+ Shows the main dashboard briefing all the options present
+
+<img width="1916" height="853" alt="image" src="https://github.com/user-attachments/assets/67729146-a101-4114-a91d-7e82b2531189" />
+Add event
+Shows dialog box to add event
+
+![Uploading image.png…]()
+Categorised event
+Shows all hackathons that are registered
+
+Diagrams
+System Architecture:
+
+Architecture Diagram Explain your system architecture - components, data flow, tech stack interaction
+
+Application Workflow:
+
+Workflow Add caption explaining your workflow
 
 Additional Documentation
 For Web Projects with Backend:
@@ -58,11 +87,8 @@ Integration and testing
 UI/UX design decisions
 
 Team Contributions
-Anuprabah Babu: [Specific contributions - e.g., Frontend development, API integration, etc.]
-Anjana Priya: [Specific contributions - e.g., Backend development, Database design, etc.]
-
-License
-This project is licensed under the [LICENSE_NAME] License - see the LICENSE file for details.
+Anuprabha Babu: Website development
+Anjana Priya: Testing
 
 Common License Options:
 
