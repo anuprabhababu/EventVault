@@ -49,7 +49,7 @@ For Software:
 Screenshots (Add at least 3)
 <img width="1917" height="947" alt="image" src="https://github.com/user-attachments/assets/4ab5061a-260d-4903-9bfd-a6b8bce611bb" />
 Remainder:
-Remainder is shown for events that re very close
+Remainder is shown for events that are very close
 
 
 <img width="1901" height="842" alt="image" src="https://github.com/user-attachments/assets/f34f7873-c237-470a-94ea-52adad823230" />
