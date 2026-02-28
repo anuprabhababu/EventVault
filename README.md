@@ -71,9 +71,7 @@ Diagrams
 System Architecture:
 
 Application Workflow:
-
-
-
+https://drive.google.com/file/d/1UYb7465O3Jp9_P-uSf21J4sRuSzO6HuS/view?usp=drive_link
 
 Additional Documentation
 For Web Projects with Backend:
